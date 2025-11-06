@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
+import { createUserProfile } from '../api/userApi'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -37,7 +38,28 @@ export default function Login() {
     setError(null)
     setLoading(true)
     try {
-      await signInWithGoogle()
+      const credential = await signInWithGoogle()
+      const userObj = credential?.user || credential
+
+      // If this is the first time this user signed in via Google, create a backend profile
+      try {
+        console.log('is new google user', credential?.additionalUserInfo?.isNewUser)
+        let isNew = credential?.additionalUserInfo?.isNewUser
+              if (isNew === undefined && userObj?.metadata) {
+                isNew = userObj.metadata.creationTime === userObj.metadata.lastSignInTime
+              }       
+       if (isNew) {
+          const id = await getIdToken()
+          await createUserProfile(id, {
+            display_name: credential.user.displayName || '',
+            email: credential.user.email || '',
+            phone_number: credential.user.phoneNumber || '',
+          })
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('failed to create backend profile for new google user', e)
+      }
       // log ID token
       try {
         const id = await getIdToken()

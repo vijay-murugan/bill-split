@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { Link } from 'react-router-dom'
 
 export default function Home() {
   const { user, signOut } = useAuth()
@@ -11,6 +12,7 @@ export default function Home() {
         <p>Signed in as {user?.email || user?.displayName}</p>
         <TokenDisplay />
         <div className="row">
+          <Link to="/profile"><button type="button">Edit profile</button></Link>
           <button onClick={signOut}>Sign out</button>
         </div>
       </div>

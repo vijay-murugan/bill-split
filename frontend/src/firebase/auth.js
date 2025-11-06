@@ -7,12 +7,20 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth'
 import { firebaseConfig } from './config'
 
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const googleProvider = new GoogleAuthProvider()
+
+// Ensure auth persists across browser restarts (local persistence)
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  // eslint-disable-next-line no-console
+  console.warn('Failed to set auth persistence to local', err)
+})
 
 // Small debug helper: print presence of key config fields (don't print raw apiKey)
 try {
@@ -40,8 +48,9 @@ export async function signUpWithEmail(email, password) {
 
 export async function signInWithGoogle() {
   try {
+    // return the full UserCredential so callers can inspect additionalUserInfo
     const res = await signInWithPopup(auth, googleProvider)
-    return res.user
+    return res
   } catch (err) {
     // Provide richer debug info in console so we can see the Firebase error code and customData
     // eslint-disable-next-line no-console
