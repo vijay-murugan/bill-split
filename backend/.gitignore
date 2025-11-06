@@ -1,0 +1,6 @@
+bill_env
+app/conf/firebase_credentials.json
+app/conf
+app/conf*
+.DS_Store
+.idea
