@@ -1,6 +1,9 @@
 import os
+
 import firebase_admin
-from firebase_admin import auth as firebase_auth, credentials
+from firebase_admin import auth as firebase_auth
+from firebase_admin import credentials
+
 
 def init_firebase():
     if firebase_admin._apps:

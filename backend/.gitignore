@@ -4,3 +4,9 @@ app/conf
 app/conf*
 .DS_Store
 .idea
+../.DS_Store
+__pycache__/
+app/__pycache__/
+app/api/__pycache__/
+app/core/__pycache__/
+app/schemas/__pycache__/

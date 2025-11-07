@@ -1,6 +1,7 @@
+from app.api import billing, user_routes
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import billing, user_routes
+
 app = FastAPI()
 
 app.add_middleware(
@@ -10,6 +11,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/", tags=["root"])
 async def root():
@@ -21,4 +23,5 @@ app.include_router(billing.router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
