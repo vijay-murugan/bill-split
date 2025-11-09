@@ -1,9 +1,10 @@
 import logging
+from uuid import uuid4
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from ..core.auth import get_current_user
-from ..db import users_col
+from ..db import friends_col, users_col
 from ..schemas.user import NewUser, User
 
 router = APIRouter(prefix="/users")
