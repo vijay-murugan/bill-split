@@ -1,4 +1,4 @@
-from app.api import billing, user_routes
+from app.api import billing, friends, user_routes
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,20 +6,20 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5173/",
+        "http://127.0.0.1:5173/",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-@app.get("/", tags=["root"])
-async def root():
-    return {"message": "API root. Use /api/v1/ for endpoints."}
-
-
 app.include_router(user_routes.router, prefix="/api")
 app.include_router(billing.router, prefix="/api")
+app.include_router(friends.router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn

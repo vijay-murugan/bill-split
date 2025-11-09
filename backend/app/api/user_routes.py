@@ -15,9 +15,15 @@ async def create_user(payload: NewUser, current=Depends(get_current_user)):
     logging.info("Creating new user %s", uid)
     doc = payload.model_dump(by_alias=True, exclude_unset=True)
     await users_col.update_one({"_id": uid}, {"$set": doc}, upsert=True)
+    email = doc.get("email")
+    if email:
+        await friends_col.update_one(
+            {"email": email},
+            {"$setOnInsert": {"_id": str(uuid4()), "email": email, "friends": []}},
+            upsert=True,
+        )
     stored = await users_col.find_one({"_id": uid})
     return User(
-        id=stored["_id"],
         display_name=stored.get("display_name"),
         email=stored.get("email"),
         phone_number=stored.get("phone_number"),
@@ -26,7 +32,11 @@ async def create_user(payload: NewUser, current=Depends(get_current_user)):
 
 @router.get("/{user_id}", response_model=User)
 async def read_user(user_id: str, current_user: User = Depends(get_current_user)):
-    return current_user
+    user = await users_col.find_one({"_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    print("User fetched from database", user)
+    return user
 
 
 @router.put(

@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
 import Profile from './pages/ProfilePage'
+import Friends from './pages/Friends'
 import AuthProvider from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -29,6 +30,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <Friends />
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
