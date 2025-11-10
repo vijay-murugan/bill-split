@@ -89,3 +89,36 @@ export async function getBills(token) {
   // GET list of bills (backend endpoint returns array of { id, amount, ... })
   return request('api/billing/get', token, 'GET')
 }
+
+export async function getBill(token, id) {
+  // Try a few common backend patterns for fetching a single bill, then fall back to filtering the list.
+  if (!id) throw new Error('getBill: id required')
+
+  // try /api/billing/get/:id
+  try {
+    return await request(`api/billing/get/${id}`, token, 'GET')
+  } catch (err) {
+    // ignore and try next
+    // eslint-disable-next-line no-console
+    console.debug('getBill: /get/:id failed, trying query param', err)
+  }
+
+  // try query param ?id=
+  try {
+    return await request(`api/billing/get?id=${encodeURIComponent(id)}`, token, 'GET')
+  } catch (err) {
+    // ignore and try fallback
+    // eslint-disable-next-line no-console
+    console.debug('getBill: get?id= failed, falling back to list', err)
+  }
+
+  // fallback: fetch all and find by id/_id/bill_id
+  const all = await getBills(token)
+  if (!Array.isArray(all)) throw new Error('getBill: backend did not return bill list')
+  const found = all.find((b) => {
+    const bid = b?.id ?? b?._id ?? b?.bill_id ?? b?.billId
+    return String(bid) === String(id)
+  })
+  if (!found) throw new Error(`getBill: bill ${id} not found`)
+  return found
+}

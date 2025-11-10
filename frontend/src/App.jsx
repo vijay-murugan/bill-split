@@ -7,6 +7,7 @@ import Profile from './pages/ProfilePage'
 import Friends from './pages/Friends'
 import AddBill from './pages/AddBill'
 import Bills from './pages/Bills'
+import BillDetail from './pages/BillDetail'
 import AuthProvider from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -53,6 +54,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Bills />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bills/:id"
+          element={
+            <ProtectedRoute>
+              <BillDetail />
             </ProtectedRoute>
           }
         />

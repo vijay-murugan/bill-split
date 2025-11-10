@@ -1,4 +1,5 @@
 from datetime import datetime
+from http.client import HTTPException
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends
@@ -36,9 +37,12 @@ async def bills(current_user=Depends(get_current_user)):
     return {"bills": result}
 
 
-# @router.get("/get/{id}")
-# async def bill_by_id(id: int, current=Depends(get_current_user)):
-#
+@router.get("/get/{id}")
+async def bill_by_id(id: str, current=Depends(get_current_user)):
+    bill = await bills_col.find_one({"_id": id})
+    if not bill:
+        raise HTTPException(status_code=404, detail="Bill not found")
+    return bill
 
 
 @router.post("/add")
