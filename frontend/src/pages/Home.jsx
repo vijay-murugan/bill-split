@@ -13,6 +13,8 @@ export default function Home() {
         <div className="row">
           <Link to="/profile"><button type="button">View profile</button></Link>
           <Link to="/friends"><button type="button">Friends</button></Link>
+          <Link to="/add-bill"><button type="button">Create bill</button></Link>
+          <Link to="/bills"><button type="button">View bills</button></Link>
           <button onClick={signOut}>Sign out</button>
         </div>
       </div>

@@ -5,6 +5,8 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import Profile from './pages/ProfilePage'
 import Friends from './pages/Friends'
+import AddBill from './pages/AddBill'
+import Bills from './pages/Bills'
 import AuthProvider from './auth/AuthProvider'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -35,6 +37,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Friends />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-bill"
+          element={
+            <ProtectedRoute>
+              <AddBill />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bills"
+          element={
+            <ProtectedRoute>
+              <Bills />
             </ProtectedRoute>
           }
         />

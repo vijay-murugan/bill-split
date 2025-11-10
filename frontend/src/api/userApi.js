@@ -80,3 +80,12 @@ export async function addFriend(token, payload) {
   // POST a new friend (payload should contain { email })
   return request('api/friends/add', token, 'POST', payload)
 }
+
+export async function createBill(token, payload) {
+  return request('api/billing/add', token, 'POST', payload)
+}
+
+export async function getBills(token) {
+  // GET list of bills (backend endpoint returns array of { id, amount, ... })
+  return request('api/billing/get', token, 'GET')
+}
