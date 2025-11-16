@@ -1,3 +1,8 @@
+"""
+Author <Vijay Murugan>
+This handles the user related operations here
+"""
+
 import logging
 from uuid import uuid4
 
@@ -40,17 +45,7 @@ async def read_user(user_id: str, current_user: User = Depends(get_current_user)
     return user
 
 
-@router.put(
-    "/{user_id}",
-    response_model=User,
-    summary="Update a user by id (current user only)",
-    responses={
-        400: {"description": "Bad request"},
-        401: {"description": "Unauthorized"},
-        403: {"description": "Forbidden"},
-        404: {"description": "Not found"},
-    },
-)
+@router.put("/{user_id}", response_model=User)
 async def update_user(
     user_id: str,
     payload: NewUser = Body(
@@ -85,12 +80,3 @@ async def update_user(
         email=stored.get("email"),
         phone_number=stored.get("phone_number"),
     )
-
-
-@router.get(
-    "/friends",
-    summary="Friends endpoint stub",
-    responses={200: {"description": "Stub response"}},
-)
-async def friends_stub(current=Depends(get_current_user)):
-    return {"message": "friends endpoint stub"}

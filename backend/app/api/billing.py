@@ -1,84 +1,66 @@
-from datetime import datetime
-from http.client import HTTPException
-from uuid import uuid4
+"""
+@Author  <Vijay Murugan>
+This holds the functionality of all the billing related endpoints.
+"""
 
-from fastapi import APIRouter, Depends
-from pymongo import UpdateOne
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..core.auth import get_current_user
-from ..db import bills_col, user_bills_col
+from ..core.exceptions import NotFoundError
 from ..schemas.bill_create import BillCreate
+from ..services.billing_service import (
+    create_bill_service,
+    get_bill_by_id_service,
+    get_bills_for_email,
+)
 
 router = APIRouter(prefix="/billing")
 
 
 @router.get("/get")
 async def bills(current_user=Depends(get_current_user)):
+    """
+    This endpoint will fetch all the bills related to the current user
+    :param current_user:
+    :return: A list of Bill objects  (a list of dictionary)
+    """
     email = current_user.get("claims", {}).get("email")
-
-    user_doc = await user_bills_col.find_one({"email": email})
-    if not user_doc:
-        return {"email": email, "bills": []}
-
-    bills = user_doc.get("bills", [])
-    bill_map = {}
-
-    result = []
-    for bill in bills:
-        bid = bill.get("bill_id")
-        result.append(
-            {
-                "bill_id": bid,
-                "amount": bill.get("total"),
-                "title": bill_map.get(bid, {}).get("title"),
-            }
-        )
-
-    return {"bills": result}
+    return await get_bills_for_email(email)
 
 
 @router.get("/get/{id}")
 async def bill_by_id(id: str, current=Depends(get_current_user)):
-    bill = await bills_col.find_one({"_id": id})
-    if not bill:
-        raise HTTPException(status_code=404, detail="Bill not found")
-    return bill
+    """
+    This endpoint will fetch a bill by its id
+    :param id:
+    :param current:
+    :return: A single bill corresponding to the given id
+    """
+    try:
+        return await get_bill_by_id_service(id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.post("/add")
 async def add_bill(payload: BillCreate, current=Depends(get_current_user)):
-    bill_id = str(uuid4())
-    bill = payload.model_dump(by_alias=True, exclude_unset=True)
-    bill["_id"] = bill_id
-    bill["created_at"] = datetime.utcnow().isoformat()
-    await bills_col.insert_one(bill)
-    ops = []
-    for user in bill.get("bill_users", []):
-        user_key = user.get("id") or user.get("email")
-        amount = user.get("amount_due")
-        user_doc_id = str(uuid4())
-        entry = {
-            "entry_id": str(uuid4()),  # unique id for this pushed bill entry
-            "bill_id": bill_id,  # existing bill id (string)
-            "total": float(amount),
-            "created_at": datetime.utcnow().isoformat(),
-        }
-        ops.append(
-            UpdateOne(
-                {"email": user_key},
-                {
-                    "$setOnInsert": {"_id": user_doc_id, "email": user_key},
-                    "$push": {"bills": entry},
-                },
-                upsert=True,
-            )
-        )
-    if ops:
-        await user_bills_col.bulk_write(ops)
-
-    return {"_id": bill_id, "created_at": bill["created_at"]}
+    """
+    This endpoint will add a bill to the current user
+    :param payload:
+    :param current:
+    :return 200 status code:
+    """
+    try:
+        return await create_bill_service(payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/balances")
 async def balances(current=Depends(get_current_user)):
+    """
+    This endpoint will fetch all the balances
+    :param current:
+    :return the balance due:
+    """
     return {"message": "balances endpoint stub"}

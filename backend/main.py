@@ -1,6 +1,8 @@
-from app.api import billing, friends, user_routes
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api import billing, friends, user_routes
+from app.core.exception_handlers import register_exception_handlers
 
 app = FastAPI()
 
@@ -16,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+register_exception_handlers(app)
 app.include_router(user_routes.router, prefix="/api")
 app.include_router(billing.router, prefix="/api")
 app.include_router(friends.router, prefix="/api")

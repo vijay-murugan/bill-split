@@ -1,6 +1,15 @@
-# File: `pyproject.toml`
 [tool.black]
 line-length = 88
-target-version = ["py310"]
+target-version = ["py311"]
 include = '\.pyi?$'
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["app"]
+combine_as_imports = true
+include_trailing_comma = true
+multi_line_output = 3
+
 
