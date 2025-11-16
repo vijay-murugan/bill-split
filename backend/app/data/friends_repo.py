@@ -10,7 +10,7 @@ async def get_friend_ids(email):
     This function gets the id of a friend given their email since it will be stored
     in the database.
     :param email:
-    :return:
+    :return friend_ids:
     """
     user_friends_doc = await friends_col.find_one({"email": email})
     if not user_friends_doc:
