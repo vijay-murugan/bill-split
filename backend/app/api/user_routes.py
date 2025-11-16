@@ -4,32 +4,32 @@ This handles the user related operations here
 """
 
 import logging
-from uuid import uuid4
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from ..core.auth import get_current_user
-from ..db import friends_col, users_col
 from ..schemas.user import NewUser, User
+from ..services import users_service
 
 router = APIRouter(prefix="/users")
 
 
 @router.post("/create", response_model=User)
 async def create_user(payload: NewUser, current=Depends(get_current_user)):
-    uid = current["uid"]
-    logging.info("Creating new user %s", uid)
-    doc = payload.model_dump(by_alias=True, exclude_unset=True)
-    await users_col.update_one({"_id": uid}, {"$set": doc}, upsert=True)
-    email = doc.get("email")
-    if email:
-        await friends_col.update_one(
-            {"email": email},
-            {"$setOnInsert": {"_id": str(uuid4()), "email": email, "friends": []}},
-            upsert=True,
-        )
-    stored = await users_col.find_one({"_id": uid})
+    """
+    Create a new user
+    :param payload:
+    :param current:
+    :return new user created:
+    """
+    uid = current.get("uid")
+    logging.info("Creating/updating user %s", uid)
+    try:
+        stored = await users_service.create_user_service(uid, payload)
+    except DomainError as e:
+        raise HTTPException(status_code=401, detail=str(e))
     return User(
+        id=stored.get("_id"),
         display_name=stored.get("display_name"),
         email=stored.get("email"),
         phone_number=stored.get("phone_number"),
@@ -37,12 +37,23 @@ async def create_user(payload: NewUser, current=Depends(get_current_user)):
 
 
 @router.get("/{user_id}", response_model=User)
-async def read_user(user_id: str, current_user: User = Depends(get_current_user)):
-    user = await users_col.find_one({"_id": user_id})
-    if not user:
+async def read_user(user_id: str, current=Depends(get_current_user)):
+    """
+    Retrieve a user
+    :param user_id:
+    :param current:
+    :return the retrieved user:
+    """
+    try:
+        user = await users_service.get_user_service(user_id)
+    except NotFoundError:
         raise HTTPException(status_code=404, detail="User not found")
-    print("User fetched from database", user)
-    return user
+    return User(
+        id=user.get("_id"),
+        display_name=user.get("display_name"),
+        email=user.get("email"),
+        phone_number=user.get("phone_number"),
+    )
 
 
 @router.put("/{user_id}", response_model=User)
@@ -56,26 +67,27 @@ async def update_user(
             "phone_number": "+123456789",
         },
     ),
-    current_user: User = Depends(get_current_user),
+    current=Depends(get_current_user),
 ):
-    if current_user["uid"] != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this user",
+    """
+    Update a user
+    :param user_id:
+    :param payload:
+    :param current:
+    :return updated user:
+    """
+    requester_uid = current.get("uid")
+    try:
+        stored = await users_service.update_user_service(
+            requester_uid, user_id, payload
         )
-    existing = await users_col.find_one({"_id": user_id})
-    if not existing:
+    except DomainError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except NotFoundError:
         raise HTTPException(status_code=404, detail="User not found")
 
-    doc = await users_col.find_one({"_id": user_id})
-    if not doc:
-        raise HTTPException(status_code=404, detail="User not found")
-    update_doc = payload.model_dump(by_alias=True, exclude_unset=True)
-    if update_doc:
-        await users_col.update_one({"_id": user_id}, {"$set": update_doc})
-    stored = await users_col.find_one({"_id": user_id})
     return User(
-        id=stored["_id"],
+        id=stored.get("_id"),
         display_name=stored.get("display_name"),
         email=stored.get("email"),
         phone_number=stored.get("phone_number"),
